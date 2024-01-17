@@ -41,9 +41,18 @@ class HBNBCommand(cmd.Cmd):
                              "Amenity", "Review"]:
             print("** class doesn't exist **")
         else:
-            new_instance = eval(args[0])()
-            new_instance.save()
-            print(new_instance.id)
+            new_inst = eval(args[0])()
+            for param in args[1:]:
+                key, val = param.split('=')
+                if val.startswith('"'):
+                    val = val[1:-1].replace('\\"', '"').replace("_", " ")
+                elif '.' in val:
+                    val = float(val)
+                else:
+                    val = int(val)
+                setattr(new_inst, key, val)
+            new_inst.save()
+            print(new_inst.id)
 
     def do_show(self, args):
         """method Prints the string representation of an instance
