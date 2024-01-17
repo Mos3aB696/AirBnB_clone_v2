@@ -20,7 +20,7 @@ class FileStorage:
 
     def all(self, cls=None):
         """return the dictionary"""
-        if cls is None:
+        if cls is not None:
             new= {}
             for key, value in self.__objects.items():
                 if cls == value.__class__ or cls == value.__class__.__name__:
