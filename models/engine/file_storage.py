@@ -1,78 +1,75 @@
 #!/usr/bin/python3
-"""class FileStorage"""
-
+"""This is the file storage class for AirBnB"""
 import json
+import sys
 from models.base_model import BaseModel
 from models.user import User
-from models.amenity import Amenity
-from models.city import City
-from models.review import Review
-from models.place import Place
 from models.state import State
+from models.city import City
+from models.amenity import Amenity
+from models.place import Place
+from models.review import Review
 
 
 class FileStorage:
-    """serializes instances to a JSON file and deserializes
-    JSON file to instances"""
+    """This class serializes instances to a JSON file"""
 
     __file_path = "file.json"
     __objects = {}
 
     def all(self, cls=None):
-        """return the dictionary"""
-        if cls is not None:
-            new= {}
-            for key, value in self.__objects.items():
-                if cls == value.__class__ or cls == value.__class__.__name__:
-                    new[key] = value
-            return new
-        return self.__objects
+        """returns a dictionary"""
+        if cls is None:
+            return self.__objects
+        else:
+            new_dict = {}
+            if len(self.__objects) > 0:
+                for key, value in self.__objects.items():
+                    if type(cls) is str:
+                        if cls == key.split(".")[0]:
+                            new_dict[key] = value
+                    else:
+                        if cls is type(value):
+                            new_dict[key] = value
+            return new_dict
 
     def new(self, obj):
-        """set in __objects the obj"""
-        key = obj.__class__.__name__ + "." + obj.id
-        FileStorage.__objects[key] = obj
+        """sets __object to given obj
+        Args:
+            obj: given object
+        """
+        if obj:
+            key = "{}.{}".format(type(obj).__name__, obj.id)
+            self.__objects[key] = obj
 
     def save(self):
-        """serializes __objects to the JSON file"""
-        dictionary_obj = {}
-        for key, val in FileStorage.__objects.items():
-            dictionary_obj[key] = val.to_dict()
-        with open(FileStorage.__file_path, "w") as file:
-            json.dump(dictionary_obj, file)
-
-    def delete(self, obj=None):
-        """Delete obj from __objects if it’s inside"""
-        if obj is not None:
-            key = obj.__class__.__name__ + "." + obj.id
-            if key in FileStorage.__objects:
-                del FileStorage.__objects[key]
-
-    def get(self, cls, id):
-        """Return an object based on the class name and its ID,
-        or None if not found"""
-        key = cls + "." + id
-        return FileStorage.__objects.get(key, None)
+        """serialize the file path to JSON file path"""
+        my_dict = {}
+        for key, value in self.__objects.items():
+            my_dict[key] = value.to_dict()
+        with open(self.__file_path, "w", encoding="UTF-8") as f:
+            json.dump(my_dict, f)
 
     def reload(self):
-        """deserialize the JSON file to __object"""
+        """serialize the file path to JSON file path"""
         try:
-            with open(FileStorage.__file_path, "r") as file:
-                FileStorage.__objects = json.load(file)
-                for key, val in FileStorage.__objects.items():
-                    if val["__class__"] == "User":
-                        FileStorage.__objects[key] = User(**val)
-                    elif val["__class__"] == "BaseModel":
-                        FileStorage.__objects[key] = BaseModel(**val)
-                    elif val["__class__"] == "Place":
-                        FileStorage.__objects[key] = Place(**val)
-                    elif val["__class__"] == "State":
-                        FileStorage.__objects[key] = State(**val)
-                    elif val["__class__"] == "City":
-                        FileStorage.__objects[key] = City(**val)
-                    elif val["__class__"] == "Amenity":
-                        FileStorage.__objects[key] = Amenity(**val)
-                    elif val["__class__"] == "Review":
-                        FileStorage.__objects[key] = Review(**val)
+            with open(self.__file_path, "r", encoding="UTF-8") as f:
+                for key, value in (json.load(f)).items():
+                    value = eval(value["__class__"])(**value)
+                    self.__objects[key] = value
         except FileNotFoundError:
             pass
+
+    def delete(self, obj=None):
+        """Deletes obj from __objecs if its inside"""
+
+        dict_key = ""
+        for key, value in self.__objects.items():
+            if obj == value:
+                dict_key = key
+        if dict_key is not "":
+            del self.__objects[dict_key]
+
+    def close(self):
+        """calls reload() for deserializing the JSON file to objects."""
+        self.reload()
