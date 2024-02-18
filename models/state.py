@@ -1,10 +1,32 @@
 #!/usr/bin/python3
-"""class state that inherit from Basemodel"""
+"""state class"""
+import os
+import models
+from models.base_model import BaseModel, Base
+from sqlalchemy import Column, String, Integer
+from sqlalchemy.orm import relationship
+from models import storage_type
 
-from .base_model import BaseModel
 
+class State(BaseModel, Base):
+    """class for State"""
 
-class State(BaseModel):
-    """public class attribute"""
+    __tablename__ = "states"
+    if storage_type == "db":
+        name = Column(String(128), nullable=False)
+        cities = relationship(
+            "City", back_populates="state", cascade="all, delete, delete-orphan"
+        )
 
-    name = ""
+    else:
+        name = ""
+
+        @property
+        def cities(self):
+            """returns list of Cities and some relationships"""
+            cities_instances = []
+            cities_dict = models.storage.all(models.City)
+            for key, value in cities_dict.items():
+                if self.id == value.state_id:
+                    cities_instances.append(value)
+            return cities_instances
